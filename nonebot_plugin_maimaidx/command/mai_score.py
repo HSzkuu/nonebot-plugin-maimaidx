@@ -1,20 +1,25 @@
 import re
 from textwrap import dedent
 
-from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Message, MessageEvent
+from nonebot import on_command, on_regex
+from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, PrivateMessageEvent
 from nonebot.matcher import Matcher
-from nonebot.params import CommandArg
+from nonebot.params import CommandArg, RegexMatched
 
 from ..libraries.image import to_bytes_io
+from ..libraries.maimaidx_ap_50 import generate_ap_50
 from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_player_score import *
+from ..libraries.maimaidx_random_50 import generate_random_50
 from ..libraries.maimaidx_update_plate import *
 
-best50  = on_command('b50', aliases={'B50'})
-minfo   = on_command('minfo', aliases={'minfo', 'Minfo', 'MINFO', 'info', 'Info', 'INFO'})
-ginfo   = on_command('ginfo', aliases={'ginfo', 'Ginfo', 'GINFO'})
-score   = on_command('分数线')
+best50   = on_command('b50', aliases={'B50'})
+ap50     = on_command('ap50', aliases={'AP50'})
+level50  = on_regex(r'([0-9]+\+?)l50')
+random50 = on_command('r50', aliases={'R50'})
+minfo    = on_command('minfo', aliases={'minfo', 'Minfo', 'MINFO', 'info', 'Info', 'INFO'})
+ginfo    = on_command('ginfo', aliases={'ginfo', 'Ginfo', 'GINFO'})
+score    = on_command('分数线')
 
 
 def get_at_qq(message: Message) -> Optional[int]:
@@ -31,6 +36,27 @@ async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
         qqid = _q
     await matcher.finish(await generate(qqid, username), reply_message=True)
 
+@ap50.handle()
+async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
+    qqid = get_at_qq(arg) or event.user_id
+    username = arg.extract_plain_text().split()
+    if _q := get_at_qq(arg):
+        qqid = _q
+    await matcher.finish(await generate_ap_50(qqid, username), reply_message=True)
+
+@level50.handle()
+async def _(event: MessageEvent, match = RegexMatched()):
+    qqid = event.user_id
+    args = match.group(1)
+    await level50.send(await generate_ap_50(qqid, args), reply_message=True)
+
+@random50.handle()
+async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
+    qqid = get_at_qq(arg) or event.user_id
+    username = arg.extract_plain_text().split()
+    if _q := get_at_qq(arg):
+        qqid = _q
+    await matcher.finish(await generate_random_50(qqid, username), reply_message=True)
 
 @minfo.handle()
 async def _(event: MessageEvent, arg: Message = CommandArg()):

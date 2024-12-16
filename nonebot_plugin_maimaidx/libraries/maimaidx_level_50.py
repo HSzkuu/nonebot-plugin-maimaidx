@@ -13,9 +13,39 @@ from ..config import *
 from .image import DrawText, image_to_base64
 from .maimaidx_api_data import maiApi
 from .maimaidx_error import *
-from .maimaidx_model import ChartInfo, PlayInfoDefault, PlayInfoDev, UserInfo
+from .maimaidx_model import PlayInfoDefault, PlayInfoDev
 from .maimaidx_music import mai
 
+
+class ChartInfo(BaseModel):
+    achievements: float
+    ds: float
+    dxScore: int
+    fc: Optional[str] = ''
+    fs: Optional[str] = ''
+    level: str
+    level_index: int
+    level_label: str
+    ra: int
+    rate: str
+    song_id: int
+    title: str
+    type: str
+
+
+class Data(BaseModel):
+    sd: Optional[List[ChartInfo]] = None
+    dx: Optional[List[ChartInfo]] = None
+
+
+class UserInfo(BaseModel):
+    additional_rating: Optional[int]
+    charts: Optional[Data]
+    nickname: Optional[str]
+    plate: Optional[str] = None
+    rating: Optional[int]
+    username: Optional[str]
+    records: Optional[List[ChartInfo]]
 
 class Draw:
 
@@ -86,15 +116,28 @@ class Draw:
 
 class DrawBest(Draw):
 
-    def __init__(self, UserInfo: UserInfo, qqId: Optional[Union[int, str]] = None) -> None:
+    def __init__(self, UserInfo: UserInfo, qqId: Optional[Union[int, str]] = None, args: Optional[List[int]] = None) -> None:
         super().__init__(Image.open(maimaidir / 'b50_bg.png').convert('RGBA'))
         self.userName = UserInfo.nickname
         self.plate = UserInfo.plate
         self.addRating = UserInfo.additional_rating
-        self.Rating = UserInfo.rating
-        self.sdBest = UserInfo.charts.sd
-        self.dxBest = UserInfo.charts.dx
         self.qqId = qqId
+        self.records = UserInfo.records
+        self.args = args if args is not None else []
+
+        self.sdBest = [i for i in self.records if mai.total_list.by_id(str(i.song_id)).basic_info.is_new == False]
+        self.dxBest = [i for i in self.records if mai.total_list.by_id(str(i.song_id)).basic_info.is_new == True]
+
+        # 选出对应level乐曲
+        self.sdBest = [i for i in self.sdBest if i.level == self.args]
+        self.dxBest = [i for i in self.dxBest if i.level == self.args]
+
+        # 按ra从高到低排序
+        self.sdBest = sorted(self.sdBest, key=lambda x: x.ra, reverse=True)[:35]
+        self.dxBest = sorted(self.dxBest, key=lambda x: x.ra, reverse=True)[:15]
+
+        # 把sdBest和dxBest的所有歌曲ra加起来
+        self.Rating = sum([_.ra for _ in self.sdBest]) + sum([_.ra for _ in self.dxBest])
 
     def _findRaPic(self) -> str:
         if self.Rating < 1000:
@@ -316,15 +359,15 @@ def generateAchievementList(ds: float):
     _achievementList.append(100.5)
     return _achievementList
 
-async def generate(qqid: Optional[int] = None, username: Optional[str] = None) -> str:
-    try:
-        if username:
-            qqid = None
-        obj = await maiApi.query_user('player', qqid=qqid, username=username)
 
+async def generate_level_50(qqid: Optional[int] = None, args: Optional[int] = None) -> str:
+    try:
+        obj = await maiApi.query_user_dev(qqid=qqid)
+        if 'charts' not in obj:
+            obj['charts'] = None
         mai_info = UserInfo(**obj)
-        draw_best = DrawBest(mai_info, qqid)
-        
+        draw_best = DrawBest(mai_info, qqid, args)
+
         pic = await draw_best.draw()
         msg = MessageSegment.image(image_to_base64(pic))
     except UserNotFoundError as e:

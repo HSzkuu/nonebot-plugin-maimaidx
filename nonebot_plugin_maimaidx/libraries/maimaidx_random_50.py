@@ -13,9 +13,39 @@ from ..config import *
 from .image import DrawText, image_to_base64
 from .maimaidx_api_data import maiApi
 from .maimaidx_error import *
-from .maimaidx_model import ChartInfo, PlayInfoDefault, PlayInfoDev, UserInfo
+from .maimaidx_model import PlayInfoDefault, PlayInfoDev
 from .maimaidx_music import mai
 
+
+class ChartInfo(BaseModel):
+    achievements: float
+    ds: float
+    dxScore: int
+    fc: Optional[str] = ''
+    fs: Optional[str] = ''
+    level: str
+    level_index: int
+    level_label: str
+    ra: int
+    rate: str
+    song_id: int
+    title: str
+    type: str
+
+
+class Data(BaseModel):
+    sd: Optional[List[ChartInfo]] = None
+    dx: Optional[List[ChartInfo]] = None
+
+
+class UserInfo(BaseModel):
+    additional_rating: Optional[int]
+    charts: Optional[Data]
+    nickname: Optional[str]
+    plate: Optional[str] = None
+    rating: Optional[int]
+    username: Optional[str]
+    records: Optional[List[ChartInfo]]
 
 class Draw:
 
@@ -91,10 +121,23 @@ class DrawBest(Draw):
         self.userName = UserInfo.nickname
         self.plate = UserInfo.plate
         self.addRating = UserInfo.additional_rating
-        self.Rating = UserInfo.rating
-        self.sdBest = UserInfo.charts.sd
-        self.dxBest = UserInfo.charts.dx
         self.qqId = qqId
+        self.records = UserInfo.records
+
+        # 选出is_new=False的records
+        self.sdBest = [i for i in self.records if mai.total_list.by_id(str(i.song_id)).basic_info.is_new == False]
+        self.dxBest = [i for i in self.records if mai.total_list.by_id(str(i.song_id)).basic_info.is_new == True]
+
+        # 随机选择sdBest35首，dxBest15首
+        self.sdBest = random.sample(self.sdBest, 35)
+        self.dxBest = random.sample(self.dxBest, 15)
+
+        # 按ra从高到低排序
+        self.sdBest = sorted(self.sdBest, key=lambda x: x.ra, reverse=True)[:35]
+        self.dxBest = sorted(self.dxBest, key=lambda x: x.ra, reverse=True)[:15]
+
+        # 把sdBest和dxBest的所有歌曲ra加起来
+        self.Rating = sum([_.ra for _ in self.sdBest]) + sum([_.ra for _ in self.dxBest])
 
     def _findRaPic(self) -> str:
         if self.Rating < 1000:
@@ -316,11 +359,13 @@ def generateAchievementList(ds: float):
     _achievementList.append(100.5)
     return _achievementList
 
-async def generate(qqid: Optional[int] = None, username: Optional[str] = None) -> str:
+async def generate_random_50(qqid: Optional[int] = None, username: Optional[str] = None) -> str:
     try:
         if username:
             qqid = None
-        obj = await maiApi.query_user('player', qqid=qqid, username=username)
+        obj = await maiApi.query_user_dev(qqid=qqid, username=username)
+        if 'charts' not in obj:
+            obj['charts'] = None
 
         mai_info = UserInfo(**obj)
         draw_best = DrawBest(mai_info, qqid)
