@@ -8,6 +8,7 @@ from nonebot.params import CommandArg, RegexMatched
 
 from ..libraries.image import to_bytes_io
 from ..libraries.maimaidx_ap_50 import generate_ap_50
+from ..libraries.maimaidx_best_40 import generate_best_40
 from ..libraries.maimaidx_level_50 import generate_level_50
 from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_player_score import *
@@ -18,6 +19,7 @@ best50   = on_command('b50', aliases={'B50'})
 ap50     = on_command('ap50', aliases={'AP50'})
 level50  = on_regex(r'([0-9]+\+?)l50')
 random50 = on_command('r50', aliases={'R50'})
+best40   = on_command('b40', aliases={'B40'})
 minfo    = on_command('minfo', aliases={'minfo', 'Minfo', 'MINFO', 'info', 'Info', 'INFO'})
 ginfo    = on_command('ginfo', aliases={'ginfo', 'Ginfo', 'GINFO'})
 score    = on_command('分数线')
@@ -58,6 +60,14 @@ async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
     if _q := get_at_qq(arg):
         qqid = _q
     await matcher.finish(await generate_random_50(qqid, username), reply_message=True)
+
+@best40.handle()
+async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
+    qqid = get_at_qq(arg) or event.user_id
+    username = arg.extract_plain_text().split()
+    if _q := get_at_qq(arg):
+        qqid = _q
+    await matcher.finish(await generate_best_40(qqid, username), reply_message=True)
 
 @minfo.handle()
 async def _(event: MessageEvent, arg: Message = CommandArg()):
