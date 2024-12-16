@@ -8,6 +8,7 @@ from nonebot.params import CommandArg, RegexMatched
 
 from ..libraries.image import to_bytes_io
 from ..libraries.maimaidx_ap_50 import generate_ap_50
+from ..libraries.maimaidx_level_50 import generate_level_50
 from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_player_score import *
 from ..libraries.maimaidx_random_50 import generate_random_50
@@ -48,7 +49,7 @@ async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
 async def _(event: MessageEvent, match = RegexMatched()):
     qqid = event.user_id
     args = match.group(1)
-    await level50.send(await generate_ap_50(qqid, args), reply_message=True)
+    await level50.send(await generate_level_50(qqid, args), reply_message=True)
 
 @random50.handle()
 async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
