@@ -96,6 +96,19 @@ class DrawBest(Draw):
         self.dxBest = UserInfo.charts.dx
         self.qqId = qqId
 
+        # 按 ra 从高到低排序，如果 ra 相同，按 achievements 从高到低排序
+        self.sdBest = sorted(
+            self.sdBest,
+            key=lambda x: (x.ra, x.achievements),
+            reverse=True
+        )[:35]
+
+        self.dxBest = sorted(
+            self.dxBest,
+            key=lambda x: (x.ra, x.achievements),
+            reverse=True
+        )[:15]
+
     def _findRaPic(self) -> str:
         if self.Rating < 1000:
             num = '01'

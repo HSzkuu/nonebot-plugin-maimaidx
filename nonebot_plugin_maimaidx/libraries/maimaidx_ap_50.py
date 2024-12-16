@@ -132,9 +132,18 @@ class DrawBest(Draw):
         self.sdBest = [i for i in self.sdBest if i.fc in ['ap', 'app']]
         self.dxBest = [i for i in self.dxBest if i.fc in ['ap', 'app']]
 
-        # 按ra从高到低排序，取前35首
-        self.sdBest = sorted(self.sdBest, key=lambda x: x.ra, reverse=True)[:35]
-        self.dxBest = sorted(self.dxBest, key=lambda x: x.ra, reverse=True)[:15]
+        # 按 ra 从高到低排序，如果 ra 相同，按 achievements 从高到低排序
+        self.sdBest = sorted(
+            self.sdBest,
+            key=lambda x: (x.ra, x.achievements),
+            reverse=True
+        )[:35]
+
+        self.dxBest = sorted(
+            self.dxBest,
+            key=lambda x: (x.ra, x.achievements),
+            reverse=True
+        )[:15]
 
         # 把sdBest和dxBest的所有歌曲ra加起来
         self.Rating = sum([_.ra for _ in self.sdBest]) + sum([_.ra for _ in self.dxBest])
