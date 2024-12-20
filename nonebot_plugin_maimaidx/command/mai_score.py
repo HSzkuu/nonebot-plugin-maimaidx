@@ -8,8 +8,13 @@ from nonebot.params import CommandArg, RegexMatched
 
 from ..libraries.image import to_bytes_io
 from ..libraries.maimaidx_ap_50 import generate_ap_50
+from ..libraries.maimaidx_app_50 import generate_app_50
 from ..libraries.maimaidx_best_40 import generate_best_40
 from ..libraries.maimaidx_fc_50 import generate_fc_50
+from ..libraries.maimaidx_fcp_50 import generate_fcp_50
+from ..libraries.maimaidx_fdx_50 import generate_fdx_50
+from ..libraries.maimaidx_fs_50 import generate_fs_50
+from ..libraries.maimaidx_fdxp_50 import generate_fdxp_50
 from ..libraries.maimaidx_level_50 import generate_level_50
 from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_player_score import *
@@ -18,7 +23,12 @@ from ..libraries.maimaidx_update_plate import *
 
 best50   = on_command('b50', aliases={'B50'})
 ap50     = on_command('ap50', aliases={'AP50'})
+app50    = on_command('ap+50', aliases={'AP+50'})
 fc50     = on_command('fc50', aliases={'FC50'})
+fcp50    = on_command('fc+50', aliases={'FC+50'})
+fdx50    = on_command('fdx50', aliases={'FDX50'})
+fs50     = on_command('fs50', aliases={'FS50'})
+fdxp50   = on_command('fdx+50', aliases={'FDX+50'})
 level50  = on_regex(r'([0-9]+\+?)l50')
 random50 = on_command('r50', aliases={'R50'})
 best40   = on_command('b40', aliases={'B40'})
@@ -49,6 +59,14 @@ async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
         qqid = _q
     await matcher.finish(await generate_ap_50(qqid, username), reply_message=True)
 
+@app50.handle()
+async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
+    qqid = get_at_qq(arg) or event.user_id
+    username = arg.extract_plain_text().split()
+    if _q := get_at_qq(arg):
+        qqid = _q
+    await matcher.finish(await generate_app_50(qqid, username), reply_message=True)
+
 @fc50.handle()
 async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
     qqid = get_at_qq(arg) or event.user_id
@@ -56,6 +74,38 @@ async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
     if _q := get_at_qq(arg):
         qqid = _q
     await matcher.finish(await generate_fc_50(qqid, username), reply_message=True)
+
+@fcp50.handle()
+async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
+    qqid = get_at_qq(arg) or event.user_id
+    username = arg.extract_plain_text().split()
+    if _q := get_at_qq(arg):
+        qqid = _q
+    await matcher.finish(await generate_fcp_50(qqid, username), reply_message=True)
+
+@fdx50.handle()
+async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
+    qqid = get_at_qq(arg) or event.user_id
+    username = arg.extract_plain_text().split()
+    if _q := get_at_qq(arg):
+        qqid = _q
+    await matcher.finish(await generate_fdx_50(qqid, username), reply_message=True)
+
+@fs50.handle()
+async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
+    qqid = get_at_qq(arg) or event.user_id
+    username = arg.extract_plain_text().split()
+    if _q := get_at_qq(arg):
+        qqid = _q
+    await matcher.finish(await generate_fs_50(qqid, username), reply_message=True)
+
+@fdxp50.handle()
+async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
+    qqid = get_at_qq(arg) or event.user_id
+    username = arg.extract_plain_text().split()
+    if _q := get_at_qq(arg):
+        qqid = _q
+    await matcher.finish(await generate_fdxp_50(qqid, username), reply_message=True)
 
 @level50.handle()
 async def _(event: MessageEvent, match = RegexMatched()):
