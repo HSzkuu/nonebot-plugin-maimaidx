@@ -9,6 +9,7 @@ from nonebot.params import CommandArg, RegexMatched
 from ..libraries.image import to_bytes_io
 from ..libraries.maimaidx_ap_50 import generate_ap_50
 from ..libraries.maimaidx_best_40 import generate_best_40
+from ..libraries.maimaidx_fc_50 import generate_fc_50
 from ..libraries.maimaidx_level_50 import generate_level_50
 from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_player_score import *
@@ -17,6 +18,7 @@ from ..libraries.maimaidx_update_plate import *
 
 best50   = on_command('b50', aliases={'B50'})
 ap50     = on_command('ap50', aliases={'AP50'})
+fc50     = on_command('fc50', aliases={'FC50'})
 level50  = on_regex(r'([0-9]+\+?)l50')
 random50 = on_command('r50', aliases={'R50'})
 best40   = on_command('b40', aliases={'B40'})
@@ -46,6 +48,14 @@ async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
     if _q := get_at_qq(arg):
         qqid = _q
     await matcher.finish(await generate_ap_50(qqid, username), reply_message=True)
+
+@fc50.handle()
+async def _(event: MessageEvent, matcher: Matcher, arg: Message = CommandArg()):
+    qqid = get_at_qq(arg) or event.user_id
+    username = arg.extract_plain_text().split()
+    if _q := get_at_qq(arg):
+        qqid = _q
+    await matcher.finish(await generate_fc_50(qqid, username), reply_message=True)
 
 @level50.handle()
 async def _(event: MessageEvent, match = RegexMatched()):
