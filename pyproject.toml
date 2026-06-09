@@ -1,12 +1,12 @@
 [project]
 name = "nonebot-plugin-maimaidx"
-version = "3.0.1"
+version = "2.1.11"
 authors = [
   { name="Yuri-YuzuChaN", email="806235364@qq.com" },
 ]
 description = "maimaidx plugin for nonebot2"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 license = "MIT"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -22,10 +22,12 @@ dependencies = [
     "pyecharts>=2.0.0,<3.0.0",
     "playwright>=1.52.0",
     "httpx-ws>=0.7.2,<1.0.0",
-    "numpy>=2.0.0,<3.0.0",
-    "pillow>=10.0.0,<12.0.0",
-    "sqlmodel>=0.0.38",
-    "aiosqlite>=0.22.1"
+
+    "pillow>=10.0.0,<11.0.0; python_version < '3.13'",
+    "pillow>=11.0.0,<12.0.0; python_version >= '3.13'",
+
+    "numpy==1.26.0; python_version < '3.10'",
+    "numpy>=2.0.0,<3.0.0; python_version >= '3.10'"
 ]
 
 [project.urls]
