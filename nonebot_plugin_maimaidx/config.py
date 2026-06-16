@@ -52,6 +52,7 @@ chart_file: Path = static / 'music_chart.json'                  # 谱面数据�
 guess_file: Path = static / 'group_guess_switch.json'           # 猜歌开关群文件
 group_alias_file: Path = static / 'group_alias_switch.json'     # 别名推送开关群文件
 pie_html_file: Path = static / 'temp_pie.html'                  # 饼图html文件
+records_file: Path = static / 'user_records.json'               # 用户records缓存文件
 
 
 # 静态资源路径

@@ -1,17 +1,27 @@
 import re
+from typing import Any, Tuple
 
-from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Message, MessageEvent
-from nonebot.params import CommandArg, Depends
+from nonebot import on_command, on_regex
+from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Message, MessageEvent
+from nonebot.params import CommandArg, Depends, RegexGroup
 
 from ..libraries.maimaidx_music_info import *
 from ..libraries.maimaidx_player_score import *
 from ..libraries.maimaidx_update_plate import *
+from ..libraries.maimaidx_best_50 import generate, generate_b40, generate_filtered
+from ..libraries.maimaidx_records import get_group_song_rank, update_user_records
 
 best50  = on_command('b50', aliases={'B50'})
+best40  = on_command('b40', aliases={'B40'})
+filtered_best = on_regex(
+    r'^(?:[\W_])*(all)?(b|ap\+?|fc\+?|(?:1[0-5]|[1-9])\+?l|aaa|aa|a|sss\+?|ss\+?|s\+?)50(?:\s+(.+))?$',
+    re.IGNORECASE
+)
 minfo   = on_command('minfo', aliases={'minfo', 'Minfo', 'MINFO', 'info', 'Info', 'INFO'})
 ginfo   = on_command('ginfo', aliases={'ginfo', 'Ginfo', 'GINFO'})
 score   = on_command('分数线')
+group_song_rank = on_command('mai群排行', aliases={' Mai群排行', 'MAI群排行', 'maimai群排行', 'mai群排行榜', 'MAI群排行榜'})
+update_data = on_command('更新数据', aliases={'更新records', 'update数据'})
 
 
 def get_at_qq(message: MessageEvent) -> Optional[int]:
@@ -29,7 +39,58 @@ async def _(
 ):
     qqid = user_id or event.user_id
     username = message.extract_plain_text().strip()
+
+    # 判断是否是 "qq" 开头
+    if username.lower().startswith("qq"):
+        num_part = username[2:].strip()
+        if num_part.isdigit() and len(num_part) <= 10:
+            qqid = int(num_part)
+            username = ""  # 清空用户名，防止传入 generate 时混乱
+
     await best50.finish(await generate(qqid, username), reply_message=True)
+
+
+@best40.handle()
+async def _(
+    event: MessageEvent, 
+    message: Message = CommandArg(), 
+    user_id: Optional[int] = Depends(get_at_qq)
+):
+    qqid = user_id or event.user_id
+    username = message.extract_plain_text().strip()
+
+    if username.lower().startswith("qq"):
+        num_part = username[2:].strip()
+        if num_part.isdigit() and len(num_part) <= 10:
+            qqid = int(num_part)
+            username = ""
+
+    await best40.finish(await generate_b40(qqid, username), reply_message=True)
+
+
+@filtered_best.handle()
+async def _(
+    event: MessageEvent,
+    args: Tuple[Any, ...] = RegexGroup(),
+    user_id: Optional[int] = Depends(get_at_qq)
+):
+    all_prefix = args[0] is not None
+    filter_type = args[1].lower()
+    username = (args[2] if len(args) > 2 and args[2] else '').strip()
+
+    if filter_type == 'b' and not all_prefix:
+        return
+
+    qqid = user_id or event.user_id
+
+    if username.lower().startswith("qq"):
+        num_part = username[2:].strip()
+        if num_part.isdigit() and len(num_part) <= 10:
+            qqid = int(num_part)
+            username = ""
+
+    ft = '' if filter_type == 'b' else filter_type
+    await filtered_best.finish(await generate_filtered(qqid, username, ft, all_mode=all_prefix), reply_message=True)
 
 
 @minfo.handle()
@@ -160,4 +221,31 @@ async def _(message: Message = CommandArg()):
             await score.finish(msg, reply_message=True)
         except (AttributeError, ValueError) as e:
             log.exception(e)
-            await score.finish('格式错误，输入“分数线 帮助”以查看帮助信息', reply_message=True)
+            await score.finish('格式错误，输入"分数线 帮助"以查看帮助信息', reply_message=True)
+
+
+@group_song_rank.handle()
+async def _(bot: Bot, event: GroupMessageEvent, message: Message = CommandArg()):
+    _args = message.extract_plain_text().strip()
+    if not _args:
+        await group_song_rank.finish('请输入曲目id或曲名', reply_message=True)
+    level_labels = '绿黄红紫白'
+    if _args[0] not in level_labels:
+        level_index = 3
+        args = _args
+    else:
+        level_index = level_labels.index(_args[0])
+        args = _args[1:].strip()
+        if not args:
+            await group_song_rank.finish('请输入曲目id或曲名', reply_message=True)
+    pic = await get_group_song_rank(bot, event.group_id, args, level_index)
+    await group_song_rank.finish(pic, reply_message=True)
+
+
+@update_data.handle()
+async def _(event: MessageEvent):
+    result = await update_user_records(qqid=event.user_id)
+    if isinstance(result, int):
+        await update_data.finish('数据更新成功', reply_message=True)
+    else:
+        await update_data.finish(result, reply_message=True)
